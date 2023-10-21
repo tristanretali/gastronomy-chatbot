@@ -6,7 +6,7 @@ from langchain.chains import LLMChain
 from langchain.agents import Tool, initialize_agent, AgentType
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
-from typing import Optional, Type
+from typing import Any, Optional, Type
 import requests
 import pprint
 import json
@@ -35,7 +35,23 @@ def find_by_ingredients(ingredients: str) -> json:
     Returns:
         json: return the recipes found by the call to the API
     """
-    url = f"{BASIC_URL}findByIngredients?apiKey={SPOONACULAR_API_KEY}&ingredients={ingredients}&number=3"
+    url = f"{BASIC_URL}findByIngredients?apiKey={SPOONACULAR_API_KEY}&ingredients={ingredients}&number=1"
+    response = requests.get(url)
+    response_json = response.json()
+    return response_json
+
+
+def recipe_details(id: str) -> json:
+    """
+    Find the details of a recipe based on the id provided
+
+    Args:
+        id (str): The recipe id
+
+    Returns:
+        json: return the details found by the call to the API
+    """
+    url = f"{BASIC_URL}/{id}/information?apiKey={SPOONACULAR_API_KEY}"
     response = requests.get(url)
     response_json = response.json()
     return response_json
@@ -49,11 +65,10 @@ class FindByIngredientsCheckInput(BaseModel):
 
 
 class FindByIngredientsTool(BaseTool):
-    """ Tool for finding recipe with ingredients"""
+    """ Tool use to find recipe based on ingredients"""
 
-    name = "find_by_ingredients"
-    description = "Useful when you need to find recipes based on ingredients."
-    return_direct = True
+    name = "FindByIngredients"
+    description = "Useful when you need to find recipes based on ingredients"
 
     def _run(self, ingredients: str) -> list:
         """
@@ -73,7 +88,7 @@ class FindByIngredientsTool(BaseTool):
                 "title": recipe["title"]
             }
             recipes.append(recipe_info)
-        return recipes
+        return str(recipes)
 
     def _arun(self):
         raise NotImplementedError("This tool does not support async")
@@ -82,17 +97,55 @@ class FindByIngredientsTool(BaseTool):
                           ] = FindByIngredientsCheckInput
 
 
-tools = [FindByIngredientsTool()]
+class RecipeDetailsCheckInput(BaseModel):
+    """ Input to get the recipe details """
+
+    id: str = Field(..., id="The id of the recipe")
+
+
+class RecipeDetailsTool(BaseTool):
+    """ Tool usd to find the details of a recipe """
+
+    name = "RecipeDetails"
+    description = "Useful when you need to find recipe details"
+    # Try to remove it later
+    return_direct = True
+
+    def _run(self, id: int) -> tuple:
+        """
+        The run implementation of my tool
+
+        Args:
+            id (int): The id of the recipe
+
+        Returns:
+            tuple: return the ingredients with their amount and the instructions
+        """
+        response = recipe_details(id)
+        recipe_ingredients = []
+        for ingredient in response["extendedIngredients"]:
+            ingredient_infos = {
+                "name": ingredient["name"],
+                "amount": ingredient["amount"],
+                "unit": ingredient["unit"]
+            }
+
+            recipe_ingredients.append(ingredient_infos)
+        return recipe_ingredients, response["instructions"]
+
+    def _arun(self):
+        raise NotImplementedError("This tool does not support async")
+
+    args_schema: Optional[Type[BaseModel]] = RecipeDetailsCheckInput
+
+
+tools = [FindByIngredientsTool(), RecipeDetailsTool()]
 
 agent = initialize_agent(tools=tools, llm=LLM,
-                         agent=AgentType.OPENAI_FUNCTIONS, verbose=True)
+                         agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
+
 
 if __name__ == "__main__":
     query = "I would like to cook something with pasta and chicken"
-    # resultat = LLM_CHAIN(query)["text"]
-    # print(resultat)
-    # # convert in dict
-    # find_recipes(json.loads(resultat))
-    # convert in string
-    # find_recipes(json.dumps(resultat))
     res = agent.run(query)
+    # print(agent.agent.llm_chain.prompt.template)
