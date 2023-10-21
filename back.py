@@ -22,11 +22,19 @@ BASIC_URL = "https://api.spoonacular.com/recipes/"
 LLM = ChatOpenAI(
     openai_api_key=config.OPENAI_API_KEY,
     temperature=0.0,
-    max_tokens=512
 )
 
 
-def find_by_ingredients(ingredients):
+def find_by_ingredients(ingredients: str) -> json:
+    """
+    Find recipes based on ingredients from the user input
+
+    Args:
+        ingredients (str): The ingredients from the user input
+
+    Returns:
+        json: return the recipes found by the call to the API
+    """
     url = f"{BASIC_URL}findByIngredients?apiKey={SPOONACULAR_API_KEY}&ingredients={ingredients}&number=3"
     response = requests.get(url)
     response_json = response.json()
@@ -41,11 +49,22 @@ class FindByIngredientsCheckInput(BaseModel):
 
 
 class FindByIngredientsTool(BaseTool):
+    """ Tool for finding recipe with ingredients"""
+
     name = "find_by_ingredients"
     description = "Useful when you need to find recipes based on ingredients."
     return_direct = True
 
-    def _run(self, ingredients: str):
+    def _run(self, ingredients: str) -> list:
+        """
+        The run implementation of my tool
+
+        Args:
+            ingredients (str): The ingredients from the user input
+
+        Returns:
+            list: return a list of dict who contain the id and the name of the recipe
+        """
         response = find_by_ingredients(ingredients)
         recipes = []
         for recipe in response:
@@ -56,7 +75,7 @@ class FindByIngredientsTool(BaseTool):
             recipes.append(recipe_info)
         return recipes
 
-    def _arun(self, ingredients: str):
+    def _arun(self):
         raise NotImplementedError("This tool does not support async")
 
     args_schema: Optional[Type[BaseModel]
