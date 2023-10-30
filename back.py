@@ -2,26 +2,29 @@ import config
 from langchain.prompts import PromptTemplate
 from langchain.llms.openai import OpenAI
 from langchain.chat_models import ChatOpenAI
-from langchain.chains import LLMChain
-from langchain.agents import Tool, initialize_agent, AgentType
+from langchain.agents import initialize_agent, AgentType
 from langchain.tools import BaseTool
+from langchain.callbacks import wandb_tracing_enabled
 from pydantic import BaseModel, Field
-from typing import Any, Optional, Type
+from typing import Optional, Type
 import requests
-import pprint
+import os
 import json
 
 
 # 100 request per day and is free to create an account
 SPOONACULAR_API_KEY = config.FOOD_API_KEY
 
+# Add the tracing of performances by wandb
+os.environ["LANGCHAIN_WANDB_TRACING"] = "true"
+os.environ["WANDB_PROJECT"] = "gastronomy-chatbot"
 
 BASIC_URL = "https://api.spoonacular.com/recipes/"
 
 
 LLM = ChatOpenAI(
     openai_api_key=config.OPENAI_API_KEY,
-    temperature=0.0,
+    temperature=0.0
 )
 
 
