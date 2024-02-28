@@ -1,10 +1,7 @@
 import config
-from langchain.prompts import PromptTemplate
-from langchain.llms.openai import OpenAI
 from langchain.chat_models import ChatOpenAI
 from langchain.agents import initialize_agent, AgentType
 from langchain.tools import BaseTool
-from langchain.callbacks import wandb_tracing_enabled
 from pydantic import BaseModel, Field
 from typing import Optional, Type
 import requests
@@ -73,7 +70,7 @@ class FindByIngredientsTool(BaseTool):
     name = "FindByIngredients"
     description = "Useful when you need to find recipes based on ingredients"
 
-    def _run(self, ingredients: str) -> list:
+    def _run(self, ingredients: str) -> str:
         """
         The run implementation of my tool
 
@@ -149,6 +146,6 @@ agent = initialize_agent(tools=tools, llm=LLM,
 
 
 if __name__ == "__main__":
-    query = "I would like to cook something with pasta and chicken"
+    query = "I would like to cook something with steak and rice"
     res = agent.run(query)
     # print(agent.agent.llm_chain.prompt.template)
