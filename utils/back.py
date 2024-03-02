@@ -12,10 +12,6 @@ import json
 # 100 request per day and is free to create an account
 SPOONACULAR_API_KEY = config.FOOD_API_KEY
 
-# Add the tracing of performances by wandb
-os.environ["LANGCHAIN_WANDB_TRACING"] = "true"
-os.environ["WANDB_PROJECT"] = "gastronomy-chatbot"
-
 BASIC_URL = "https://api.spoonacular.com/recipes/"
 
 
