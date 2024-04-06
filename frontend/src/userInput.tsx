@@ -22,8 +22,11 @@ export default class UserInput extends React.Component<Props, State> {
   }
   private handleClick() {
     this.props.onNewUserQuestion(this.state.question);
+    this.setState({ question: "" });
+    this.props.onNewChatbotAnswer("lorem lorem lorem lorem");
   }
   render() {
+    const question: string = this.state.question;
     return (
       <div className=" flex border-2 border-indigo-400 rounded-lg w-11/12 ml-[4%]">
         <input
@@ -31,6 +34,7 @@ export default class UserInput extends React.Component<Props, State> {
           placeholder="Ask me something ..."
           type="text"
           name="askQuestion"
+          value={question}
           onChange={this.handleChange}
         />
         <div className="w-1/12 flex md:justify-end md:me-3">

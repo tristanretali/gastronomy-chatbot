@@ -17,13 +17,13 @@ export default class Chatbot extends React.Component<{}, State> {
     this.handleNewChatbotAnswer = this.handleNewChatbotAnswer.bind(this);
   }
   handleNewUserQuestion(question: string) {
-    this.state.userMessage.push(question);
-    console.log(this.state.userMessage);
+    const newUserMessage = [...this.state.userMessage, question];
+    this.setState({ userMessage: newUserMessage });
   }
 
   handleNewChatbotAnswer(answer: string) {
-    this.state.chatbotMessage.push(answer);
-    console.log(this.state.chatbotMessage);
+    const newChatbotMessage = [...this.state.chatbotMessage, answer];
+    this.setState({ chatbotMessage: newChatbotMessage });
   }
 
   render() {
