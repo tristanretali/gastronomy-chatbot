@@ -3,7 +3,7 @@ import React from "react";
 export default class Chat extends React.Component {
   render() {
     return (
-      <div className="bg-red-500">
+      <div className="bg-red-500 w-11/12 ml-[4%] mt-2">
         <h1>Chat</h1>
       </div>
     );
