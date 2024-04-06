@@ -7,10 +7,12 @@ module.exports = {
     },
     extend: {
       minHeight: {
-        'desktop': '90vh',
-      }
+        desktop: "90vh",
+      },
+      spacing: {
+        header: "17rem",
+      },
     },
   },
   plugins: [],
-}
-
+};
