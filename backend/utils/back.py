@@ -1,22 +1,22 @@
-import config
+import os
+from dotenv import load_dotenv
 from langchain.chat_models import ChatOpenAI
 from langchain.agents import initialize_agent, AgentType
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
 from typing import Optional, Type
 import requests
-import os
 import json
 
-
+# Load environment variables from .env file
+load_dotenv(dotenv_path="../.env.local")
 # 100 request per day and is free to create an account
-SPOONACULAR_API_KEY = config.FOOD_API_KEY
-
+SPOONACULAR_API_KEY = os.getenv("FOOD_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 BASIC_URL = "https://api.spoonacular.com/recipes/"
 
-
 LLM = ChatOpenAI(
-    openai_api_key=config.OPENAI_API_KEY,
+    openai_api_key=OPENAI_API_KEY,
     temperature=0.0
 )
 
@@ -90,7 +90,7 @@ class FindByIngredientsTool(BaseTool):
         raise NotImplementedError("This tool does not support async")
 
     args_schema: Optional[Type[BaseModel]
-                          ] = FindByIngredientsCheckInput
+    ] = FindByIngredientsCheckInput
 
 
 class RecipeDetailsCheckInput(BaseModel):
@@ -139,7 +139,6 @@ tools = [FindByIngredientsTool(), RecipeDetailsTool()]
 
 agent = initialize_agent(tools=tools, llm=LLM,
                          agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
-
 
 if __name__ == "__main__":
     query = "I would like to cook something with steak and rice"
