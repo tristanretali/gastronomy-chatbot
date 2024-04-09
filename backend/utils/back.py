@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from langchain.prompts import PromptTemplate
 from langchain.chat_models import ChatOpenAI
 from langchain.agents import initialize_agent, AgentType
 from langchain.tools import BaseTool
@@ -22,15 +23,6 @@ LLM = ChatOpenAI(
 
 
 def find_by_ingredients(ingredients: str) -> json:
-    """
-    Find recipes based on ingredients from the user input
-
-    Args:
-        ingredients (str): The ingredients from the user input
-
-    Returns:
-        json: return the recipes found by the call to the API
-    """
     url = f"{BASIC_URL}findByIngredients?apiKey={SPOONACULAR_API_KEY}&ingredients={ingredients}&number=1"
     response = requests.get(url)
     response_json = response.json()
@@ -38,24 +30,35 @@ def find_by_ingredients(ingredients: str) -> json:
 
 
 def recipe_details(id: str) -> json:
-    """
-    Find the details of a recipe based on the id provided
-
-    Args:
-        id (str): The recipe id
-
-    Returns:
-        json: return the details found by the call to the API
-    """
     url = f"{BASIC_URL}/{id}/information?apiKey={SPOONACULAR_API_KEY}"
     response = requests.get(url)
     response_json = response.json()
     return response_json
 
 
-class FindByIngredientsCheckInput(BaseModel):
-    """ Input for finding recipe with ingredients"""
+def format_recipe(recipe_detail: str) -> str:
+    ingredients = json.dumps(recipe_detail[0])
+    prompt_template = PromptTemplate.from_template("""
+    <context>You are a chef and want to make your recipe clear as possible</context>
+    ---
+    I will provide you a JSON follow by a text with these information: the ingredients and the instructions
+    Your answer will be structure in two parts.
+    ---
+    In the first part you will introduce the recipe with each ingredient in a bullet list. You should provide these information:
+    - The name
+    - The amount
+    - The unit
+    ---
+    In the second part you will detail the instructions in a numbered list to help the user to prepare the recipe.
+    ---
+    This is the content of the JSON and text: ### {recipe} ###
+    """)
+    prompt = prompt_template.format(recipe=recipe_detail)
+    response = LLM.invoke(prompt)
+    return response
 
+
+class FindByIngredientsCheckInput(BaseModel):
     ingredients: str = Field(...,
                              ingredients="The ingredients who will be use for the recipe")
 
@@ -67,15 +70,6 @@ class FindByIngredientsTool(BaseTool):
     description = "Useful when you need to find recipes based on ingredients"
 
     def _run(self, ingredients: str) -> str:
-        """
-        The run implementation of my tool
-
-        Args:
-            ingredients (str): The ingredients from the user input
-
-        Returns:
-            list: return a list of dict who contain the id and the name of the recipe
-        """
         response = find_by_ingredients(ingredients)
         recipes = []
         for recipe in response:
@@ -89,34 +83,21 @@ class FindByIngredientsTool(BaseTool):
     def _arun(self):
         raise NotImplementedError("This tool does not support async")
 
-    args_schema: Optional[Type[BaseModel]
-    ] = FindByIngredientsCheckInput
+    args_schema: Optional[Type[BaseModel]] = FindByIngredientsCheckInput
 
 
 class RecipeDetailsCheckInput(BaseModel):
-    """ Input to get the recipe details """
-
-    id: str = Field(..., id="The id of the recipe")
+    id: str = Field(..., str="The id of the recipe")
 
 
 class RecipeDetailsTool(BaseTool):
-    """ Tool usd to find the details of a recipe """
-
     name = "RecipeDetails"
     description = "Useful when you need to find recipe details"
+
     # Try to remove it later
-    return_direct = True
+    # return_direct = True
 
-    def _run(self, id: int) -> tuple:
-        """
-        The run implementation of my tool
-
-        Args:
-            id (int): The id of the recipe
-
-        Returns:
-            tuple: return the ingredients with their amount and the instructions
-        """
+    def _run(self, id: str) -> tuple:
         response = recipe_details(id)
         recipe_ingredients = []
         for ingredient in response["extendedIngredients"]:
@@ -135,7 +116,29 @@ class RecipeDetailsTool(BaseTool):
     args_schema: Optional[Type[BaseModel]] = RecipeDetailsCheckInput
 
 
-tools = [FindByIngredientsTool(), RecipeDetailsTool()]
+class FormatRecipeCheckInput(BaseModel):
+    """ Input for finding recipe with ingredients"""
+
+    recipe_detail: str = Field(...,
+                               recipe_detail="All information about the recipe")
+
+
+class FormatRecipeTool(BaseTool):
+    name = "FormatRecipe"
+    description = "Useful when you need to convert a recipe details to better format"
+    return_direct = True
+
+    def _run(self, recipe_detail: str):
+        response = format_recipe(recipe_detail)
+        return response
+
+    def _arun(self):
+        raise NotImplementedError("This tool does not support async")
+
+    args_schema: Optional[Type[BaseModel]] = FormatRecipeCheckInput
+
+
+tools = [FindByIngredientsTool(), RecipeDetailsTool(), FormatRecipeTool()]
 
 agent = initialize_agent(tools=tools, llm=LLM,
                          agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
