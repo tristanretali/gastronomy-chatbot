@@ -10,7 +10,7 @@ import requests
 import json
 
 # Load environment variables from .env file
-load_dotenv(dotenv_path="../.env.local")
+load_dotenv(dotenv_path="/Users/tristanretali/Documents/development/gastronomy-chatbot/backend/.env.local")
 # 100 request per day and is free to create an account
 SPOONACULAR_API_KEY = os.getenv("FOOD_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -143,7 +143,13 @@ tools = [FindByIngredientsTool(), RecipeDetailsTool(), FormatRecipeTool()]
 agent = initialize_agent(tools=tools, llm=LLM,
                          agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
 
+
+def find_recipe(input: str) -> str:
+    return agent.run(input).content
+
+
 if __name__ == "__main__":
     query = "I would like to cook something with steak and rice"
-    res = agent.run(query)
+    res = find_recipe(query)
+    print(res)
     # print(agent.agent.llm_chain.prompt.template)
