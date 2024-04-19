@@ -47,13 +47,12 @@ def format_recipe(recipe_detail: str) -> str:
     In first part you will introduce the recipe with her name.
     ---
     In the second part you will add each ingredient in a bullet list. You should provide these information:
-    - The name
-    - The amount
-    - The unit
+    - The name: amount unit
     ---
     In the third part you will detail the instructions in a numbered list to help the user to prepare the recipe. 
     You should details the instructions.
     ---
+    You will separate each part by these characters: ###
     This is the content of the JSON and instructions: ### {recipe} ###
     """)
     prompt = prompt_template.format(recipe=recipe_detail)

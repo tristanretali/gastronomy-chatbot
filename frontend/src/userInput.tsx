@@ -1,6 +1,5 @@
 import React from "react";
 import axios from "axios";
-import { type } from "node:os";
 
 interface Props {
   onNewUserQuestion: any;
@@ -29,7 +28,6 @@ export default class UserInput extends React.Component<Props, State> {
         user_input: this.state.question,
       })
       .then((response) => {
-        console.log(response.data.recipe);
         this.props.onNewChatbotAnswer(response.data.recipe);
       })
       .catch((error) => {
