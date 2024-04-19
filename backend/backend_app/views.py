@@ -11,7 +11,6 @@ def index(request):
 @csrf_exempt
 def find(request):
     if request.method == 'POST':
-        # For JSON data, use json.loads(request.body)
         try:
             json_data = json.loads(request.body)
             print(json_data)

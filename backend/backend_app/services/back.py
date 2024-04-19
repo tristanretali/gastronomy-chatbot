@@ -41,17 +41,20 @@ def format_recipe(recipe_detail: str) -> str:
     prompt_template = PromptTemplate.from_template("""
     <context>You are a chef and want to make your recipe clear as possible</context>
     ---
-    I will provide you a JSON follow by a text with these information: the ingredients and the instructions
-    Your answer will be structure in two parts.
+    I will provide you a JSON follow by a text with these information: the name of the recipe, the ingredients and the instructions.
+    Your answer will be structure in three parts.
     ---
-    In the first part you will introduce the recipe with each ingredient in a bullet list. You should provide these information:
+    In first part you will introduce the recipe with her name.
+    ---
+    In the second part you will add each ingredient in a bullet list. You should provide these information:
     - The name
     - The amount
     - The unit
     ---
-    In the second part you will detail the instructions in a numbered list to help the user to prepare the recipe.
+    In the third part you will detail the instructions in a numbered list to help the user to prepare the recipe. 
+    You should details the instructions.
     ---
-    This is the content of the JSON and text: ### {recipe} ###
+    This is the content of the JSON and instructions: ### {recipe} ###
     """)
     prompt = prompt_template.format(recipe=recipe_detail)
     response = LLM.invoke(prompt)
@@ -60,7 +63,7 @@ def format_recipe(recipe_detail: str) -> str:
 
 class FindByIngredientsCheckInput(BaseModel):
     ingredients: str = Field(...,
-                             ingredients="The ingredients who will be use for the recipe")
+                             ingredients="The ingredients who will be use for the recipe separate by a comma")
 
 
 class FindByIngredientsTool(BaseTool):
@@ -108,7 +111,7 @@ class RecipeDetailsTool(BaseTool):
             }
 
             recipe_ingredients.append(ingredient_infos)
-        return recipe_ingredients, response["instructions"]
+        return response["title"], recipe_ingredients, response["instructions"]
 
     def _arun(self):
         raise NotImplementedError("This tool does not support async")

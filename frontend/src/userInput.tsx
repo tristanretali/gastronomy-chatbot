@@ -1,4 +1,6 @@
 import React from "react";
+import axios from "axios";
+import { type } from "node:os";
 
 interface Props {
   onNewUserQuestion: any;
@@ -22,8 +24,19 @@ export default class UserInput extends React.Component<Props, State> {
   }
   private handleClick() {
     this.props.onNewUserQuestion(this.state.question);
+    axios
+      .post("http://127.0.0.1:8000/recipe/find/", {
+        user_input: this.state.question,
+      })
+      .then((response) => {
+        console.log(response.data.recipe);
+        this.props.onNewChatbotAnswer(response.data.recipe);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+    //this.props.onNewChatbotAnswer("lorem lorem lorem lorem");
     this.setState({ question: "" });
-    this.props.onNewChatbotAnswer("lorem lorem lorem lorem");
   }
   render() {
     const question: string = this.state.question;
